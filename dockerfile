@@ -7,9 +7,7 @@ RUN apt-get update \
  && echo "ServerName localhost" >> /etc/apache2/apache2.conf \
  && sed -i '/<Directory \/var\/www\/>/,/<\/Directory>/ s/AllowOverride None/AllowOverride All/' /etc/apache2/apache2.conf
 
-# Copia y habilita configuración de CORS
-COPY cors.conf /etc/apache2/conf-available/cors.conf
-RUN a2enconf cors
+
 
 # Instalar Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
