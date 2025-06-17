@@ -16,6 +16,9 @@ COPY . /var/www/html/
 # (Opcional) si incluyes composer.json en la raíz:
 # COPY composer.json composer.lock /var/www/html/
 
+# Copiar reglas de Apache para rutas limpias
+COPY .htaccess /var/www/html/
+
 # Instalar dependencias PHP
 RUN composer install --no-dev --optimize-autoloader
 

@@ -1,0 +1,12 @@
+# Activa el motor de rewrites
+RewriteEngine On
+
+# Sirve index.php como DirectoryIndex
+DirectoryIndex index.php
+
+# Si no es un archivo real…
+RewriteCond %{REQUEST_FILENAME} !-f
+# …y no es un directorio real
+RewriteCond %{REQUEST_FILENAME} !-d
+# entonces reescribe la URL a index.php, pasándole la ruta original
+RewriteRule ^(.*)$ index.php/$1 [QSA,L]
