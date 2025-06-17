@@ -1,0 +1,47 @@
+services:
+  - type: web
+    name: api-php
+    env: docker
+    repo: https://github.com/HLY-SHT/api.git
+    branch: main
+    dockerfilePath: Dockerfile
+    envVars:
+      - key: DB_HOST
+        value: db
+      - key: DB_NAME
+        value: cannabis_db
+      - key: DB_USER
+        value: appsociacion
+      - key: DB_PASS
+        value: admin
+      - key: JWT_SECRET
+        fromSecret: jwt-secret
+    plan: free
+
+  - type: private_service
+    name: db
+    env: docker
+    image: mysql:8.0
+    envVars:
+      - key: MYSQL_ROOT_PASSWORD
+        fromSecret: mysql-root-password
+      - key: MYSQL_DATABASE
+        value: cannabis_db
+      - key: MYSQL_USER
+        value: appsociacion
+      - key: MYSQL_PASSWORD
+        fromSecret: mysql-user-password
+    plan: free
+
+  - type: web
+    name: phpmyadmin
+    env: docker
+    image: phpmyadmin/phpmyadmin
+    envVars:
+      - key: PMA_HOST
+        value: db
+      - key: PMA_USER
+        value: appsociacion
+      - key: PMA_PASSWORD
+        fromSecret: mysql-user-password
+    plan: free
