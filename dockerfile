@@ -5,7 +5,8 @@ RUN apt-get update \
  && apt-get install -y --no-install-recommends \
       zip unzip git libpq-dev \
  && docker-php-ext-install pdo pdo_pgsql \
- && a2enmod rewrite
+ && a2enmod rewrite headers \
+ && sed -i 's/AllowOverride None/AllowOverride All/g' /etc/apache2/apache2.conf
 
 # Instalar Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
@@ -13,10 +14,8 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 # Copiar código fuente y composer.json
 WORKDIR /var/www/html
 COPY . /var/www/html/
-# (Opcional) si incluyes composer.json en la raíz:
-# COPY composer.json composer.lock /var/www/html/
 
-# Copiar reglas de Apache para rutas limpias
+# Copiar .htaccess para CORS y rutas limpias
 COPY .htaccess /var/www/html/
 
 # Instalar dependencias PHP
