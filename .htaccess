@@ -1,19 +1,23 @@
-# Permitir CORS para todas las respuestas
+# 1) Forzar CORS en Apache
 <IfModule mod_headers.c>
     Header always set Access-Control-Allow-Origin "*"
     Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
     Header always set Access-Control-Allow-Headers "Content-Type, Authorization"
 </IfModule>
 
-# Activa el motor de rewrites
-RewriteEngine On
+# 2) Rewrite para OPTIONS preflight directo a index.php
+<IfModule mod_rewrite.c>
+    RewriteEngine On
 
-# Sirve index.php como DirectoryIndex
+    # Si es OPTIONS, redirige todo a index.php
+    RewriteCond %{REQUEST_METHOD} OPTIONS
+    RewriteRule ^.*$ index.php [L]
+
+    # Para cualquier otra ruta bonita
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)$ index.php/$1 [QSA,L]
+</IfModule>
+
+# 3) Asegurarnos de servir index.php en /
 DirectoryIndex index.php
-
-# Si no es un archivo real…
-RewriteCond %{REQUEST_FILENAME} !-f
-# …y no es un directorio real
-RewriteCond %{REQUEST_FILENAME} !-d
-# entonces reescribe la URL a index.php, pasándole la ruta original
-RewriteRule ^(.*)$ index.php/$1 [QSA,L]
