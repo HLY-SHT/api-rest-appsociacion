@@ -1,23 +1,20 @@
-# 1) Forzar CORS en Apache
 <IfModule mod_headers.c>
     Header always set Access-Control-Allow-Origin "*"
     Header always set Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
     Header always set Access-Control-Allow-Headers "Content-Type, Authorization"
 </IfModule>
 
-# 2) Rewrite para OPTIONS preflight directo a index.php
 <IfModule mod_rewrite.c>
     RewriteEngine On
 
-    # Si es OPTIONS, redirige todo a index.php
+    # Responder OPTIONS directamente con 200 OK y sin pasar a PHP
     RewriteCond %{REQUEST_METHOD} OPTIONS
-    RewriteRule ^.*$ index.php [L]
+    RewriteRule ^(.*)$ $1 [R=200,L]
 
-    # Para cualquier otra ruta bonita
+    # Reglas para rutas limpias y redirigir a index.php
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteRule ^(.*)$ index.php/$1 [QSA,L]
 </IfModule>
 
-# 3) Asegurarnos de servir index.php en /
 DirectoryIndex index.php
