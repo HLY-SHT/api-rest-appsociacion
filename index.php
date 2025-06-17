@@ -825,35 +825,35 @@ switch ($endpoint) {
         if ($method === 'GET') {
             $club_id = get_club_id_from_token($jwt_secret);
 
-            // 1) Comprobar plan del club
-            $stmtPlan = $db->prepare("SELECT suscripcion FROM clubs WHERE id = :cid");
-            $stmtPlan->execute([':cid' => $club_id]);
-            $info = $stmtPlan->fetch(PDO::FETCH_ASSOC);
-            $plan = $info['suscripcion'] ?? '';
+            // 1) Comprobar plan del club (sin cambios)
+$stmtPlan = $db->prepare("SELECT suscripcion FROM clubs WHERE id = :cid");
+$stmtPlan->execute([':cid' => $club_id]);
+$info = $stmtPlan->fetch(PDO::FETCH_ASSOC);
+$plan = $info['suscripcion'] ?? '';
 
-            // Plan Basic NO tiene dashboard
-            if ($plan !== 'Premium') {
-                response(403, ['error' => 'Tu plan no incluye acceso al Dashboard']);
-            }
+if ($plan !== 'Premium') {
+    response(403, ['error' => 'Tu plan no incluye acceso al Dashboard']);
+}
 
-            // 2) Totales
-            $totales = [
-                'socios'        => (int)$db->query("SELECT COUNT(*) FROM socios WHERE club_id = $club_id")->fetchColumn(),
-                'variedades'    => (int)$db->query("SELECT COUNT(*) FROM variedades WHERE club_id = $club_id")->fetchColumn(),
-                'dispensaciones' => (int)$db->query("SELECT COUNT(*) FROM dispensaciones WHERE club_id = $club_id")->fetchColumn(),
-                'ingresos'      => (float)$db->query("SELECT COALESCE(SUM(dinero),0) FROM dispensaciones WHERE club_id = $club_id")->fetchColumn(),
-            ];
+// 2) Totales (sin cambios)
+$totales = [
+    'socios'        => (int)$db->query("SELECT COUNT(*) FROM socios WHERE club_id = $club_id")->fetchColumn(),
+    'variedades'    => (int)$db->query("SELECT COUNT(*) FROM variedades WHERE club_id = $club_id")->fetchColumn(),
+    'dispensaciones' => (int)$db->query("SELECT COUNT(*) FROM dispensaciones WHERE club_id = $club_id")->fetchColumn(),
+    'ingresos'      => (float)$db->query("SELECT COALESCE(SUM(dinero),0) FROM dispensaciones WHERE club_id = $club_id")->fetchColumn(),
+];
 
-            // 3) Ingresos mensuales
-            $mensual = $db->query("
-                      SELECT TO_CHAR(fecha, 'YYYY-MM') AS mes, SUM(dinero) AS total
-                        FROM dispensaciones
-                       WHERE club_id = $club_id
-                       GROUP BY mes
-                       ORDER BY mes
-                    ")->fetchAll(PDO::FETCH_ASSOC);
+// 3) Ingresos mensuales (sin cambios)
+$mensual = $db->query("
+          SELECT TO_CHAR(fecha, 'YYYY-MM') AS mes, SUM(dinero) AS total
+            FROM dispensaciones
+           WHERE club_id = $club_id
+           GROUP BY mes
+           ORDER BY mes
+        ")->fetchAll(PDO::FETCH_ASSOC);
 
-            $topSocios = $db->query("
+// 4) Top 10 socios este mes (corrige GROUP BY)
+$topSocios = $db->query("
   SELECT s.nombre, s.apellidos, COUNT(*) AS total
     FROM dispensaciones d
     JOIN socios s ON d.socio_id = s.id AND d.club_id = s.club_id
@@ -864,33 +864,34 @@ switch ($endpoint) {
    LIMIT 10
 ")->fetchAll(PDO::FETCH_ASSOC);
 
+// 5) Top 10 variedades (CORREGIDO: incluir v.nombre en GROUP BY)
+$topVariedades = $db->query("
+          SELECT v.nombre, COUNT(*) AS total
+            FROM dispensaciones d
+            JOIN variedades v ON d.variedad_id = v.id AND d.club_id = v.club_id
+           WHERE d.club_id = $club_id
+           GROUP BY v.nombre, d.variedad_id
+           ORDER BY total DESC
+           LIMIT 10
+        ")->fetchAll(PDO::FETCH_ASSOC);
 
-            // 5) Top 10 variedades
-            $topVariedades = $db->query("
-                      SELECT v.nombre, COUNT(*) AS total
-                        FROM dispensaciones d
-                        JOIN variedades v ON d.variedad_id = v.id AND d.club_id = v.club_id
-                       WHERE d.club_id = $club_id
-                       GROUP BY d.variedad_id
-                       ORDER BY total DESC
-                       LIMIT 10
-                    ")->fetchAll(PDO::FETCH_ASSOC);
+// 6) Socios con cuota vencida (sin cambios)
+$caducados = $db->query("
+          SELECT id, nombre, apellidos, cuota
+            FROM socios
+           WHERE club_id = $club_id
+             AND cuota < CURRENT_DATE
+        ")->fetchAll(PDO::FETCH_ASSOC);
 
-            // 6) Socios con cuota vencida
-            $caducados = $db->query("
-                      SELECT id, nombre, apellidos, cuota
-                        FROM socios
-                       WHERE club_id = $club_id
-                         AND cuota < CURRENT_DATE
-                    ")->fetchAll(PDO::FETCH_ASSOC);
+// Enviar respuesta
+response(200, [
+    'totales'       => $totales,
+    'mensual'       => $mensual,
+    'topSocios'     => $topSocios,
+    'topVariedades' => $topVariedades,
+    'caducados'     => $caducados
+]);
 
-            response(200, [
-                'totales'       => $totales,
-                'mensual'       => $mensual,
-                'topSocios'     => $topSocios,
-                'topVariedades' => $topVariedades,
-                'caducados'     => $caducados
-            ]);
         }
         break;
 
