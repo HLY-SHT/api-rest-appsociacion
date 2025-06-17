@@ -355,24 +355,22 @@ switch ($endpoint) {
 
             // Actualizar cuota y restar del monedero
             $stmt = $db->prepare("
-                UPDATE socios 
-                   SET cuota = DATE_ADD(
-                                 GREATEST(
-                                   COALESCE(cuota, CURRENT_DATE), 
-                                   CURRENT_DATE
-                                 ), 
-                                 INTERVAL :meses MONTH
-                               ),
-                       monedero = monedero - :precio
-                 WHERE id = :id 
-                   AND club_id = :cid
-            ");
-            $stmt->execute([
-                ':meses'  => $meses,
-                ':precio' => $precio,
-                ':id'     => $socio_id,
-                ':cid'    => $club_id
-            ]);
+            UPDATE socios 
+               SET cuota = GREATEST(
+                              COALESCE(cuota, CURRENT_DATE), 
+                              CURRENT_DATE
+                           ) + make_interval(months => :meses),
+                   monedero = monedero - :precio
+             WHERE id = :id 
+               AND club_id = :cid
+        ");
+        $stmt->execute([
+            ':meses'  => $meses,
+            ':precio' => $precio,
+            ':id'     => $socio_id,
+            ':cid'    => $club_id
+        ]);
+        
 
             response(200, ['message' => 'Cuota renovada']);
         } elseif ($method === 'PUT' && $sub === 'monedero' && $id) {
@@ -681,16 +679,19 @@ switch ($endpoint) {
                     ':cid' => $club_id
                 ]);
 
-                // 4) Calcular el nuevo ID de dispensación dentro de este club
-                $stmtMax = $db->prepare("
-                    SELECT MAX(id) AS max_id 
-                      FROM dispensaciones 
-                     WHERE club_id = :cid 
-                     FOR UPDATE
-                ");
-                $stmtMax->execute([':cid' => $club_id]);
-                $row = $stmtMax->fetch(PDO::FETCH_ASSOC);
-                $nuevoId = $row && $row['max_id'] !== null ? ($row['max_id'] + 1) : 1;
+               // 4) Calcular el nuevo ID de dispensación dentro de este club
+$stmtMax = $db->prepare("
+SELECT id 
+  FROM dispensaciones 
+ WHERE club_id = :cid 
+ ORDER BY id DESC 
+ LIMIT 1 
+ FOR UPDATE
+");
+$stmtMax->execute([':cid' => $club_id]);
+$row = $stmtMax->fetch(PDO::FETCH_ASSOC);
+$nuevoId = $row && $row['id'] !== null ? ($row['id'] + 1) : 1;
+
 
                 // 5) Insertar la nueva dispensación, incluyendo el campo `id`
                 $db->prepare("
