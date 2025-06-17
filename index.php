@@ -312,7 +312,7 @@ switch ($endpoint) {
         
             // 4. Insertar socio
             $stmt = $db->prepare("INSERT INTO socios (club_id, id, nombre, apellidos, dni, cargo, cuota, monedero) 
-                                  VALUES (:cid, :id, :n, :a, :d, :c, CURDATE(), 0)");
+                                  VALUES (:cid, :id, :n, :a, :d, :c, CURRENT_DATE, 0)");
             $stmt->execute([
                 ':cid' => $club_id,
                 ':id'  => $in['id'],
@@ -359,8 +359,8 @@ switch ($endpoint) {
                 UPDATE socios 
                    SET cuota = DATE_ADD(
                                  GREATEST(
-                                   COALESCE(cuota, CURDATE()), 
-                                   CURDATE()
+                                   COALESCE(cuota, CURRENT_DATE), 
+                                   CURRENT_DATE
                                  ), 
                                  INTERVAL :meses MONTH
                                ),
@@ -847,7 +847,7 @@ switch ($endpoint) {
             
                     // 3) Ingresos mensuales
                     $mensual = $db->query("
-                      SELECT DATE_FORMAT(fecha, '%Y-%m') AS mes, SUM(dinero) AS total
+                      SELECT TO_CHAR(fecha, 'YYYY-MM') AS mes, SUM(dinero) AS total
                         FROM dispensaciones
                        WHERE club_id = $club_id
                        GROUP BY mes
@@ -860,7 +860,7 @@ switch ($endpoint) {
                         FROM dispensaciones d
                         JOIN socios s ON d.socio_id = s.id AND d.club_id = s.club_id
                        WHERE d.club_id = $club_id
-                         AND DATE_FORMAT(d.fecha, '%Y-%m') = DATE_FORMAT(CURDATE(), '%Y-%m')
+                         AND TO_CHAR(d.fecha, 'YYYY-MM') = TO_CHAR(CURRENT_DATE, 'YYYY-MM')
                        GROUP BY d.socio_id
                        ORDER BY total DESC
                        LIMIT 10
@@ -882,7 +882,7 @@ switch ($endpoint) {
                       SELECT id, nombre, apellidos, cuota
                         FROM socios
                        WHERE club_id = $club_id
-                         AND cuota < CURDATE()
+                         AND cuota < CURRENT_DATE
                     ")->fetchAll(PDO::FETCH_ASSOC);
             
                     response(200, [
