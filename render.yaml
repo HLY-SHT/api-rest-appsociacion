@@ -2,7 +2,7 @@ services:
   - type: web
     runtime: docker
     name: api-php
-    repo: https://github.com/HLY-SHT/api.git
+    repo: https://github.com/HLY-SHT/api-rest-appsociacion.git
     branch: main
     dockerfilePath: Dockerfile
     envVars:
@@ -21,7 +21,7 @@ services:
   - type: pserv
     runtime: docker
     name: db
-    image: mysql:8.0
+    dockerImage: mysql:8.0
     envVars:
       - key: MYSQL_ROOT_PASSWORD
         sync: false
@@ -36,7 +36,7 @@ services:
   - type: web
     runtime: docker
     name: phpmyadmin
-    image: phpmyadmin/phpmyadmin
+    dockerImage: phpmyadmin/phpmyadmin
     envVars:
       - key: PMA_HOST
         value: db
