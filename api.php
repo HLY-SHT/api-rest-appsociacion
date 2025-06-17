@@ -37,7 +37,7 @@ function connect_db()
         response(500, ['error' => 'Error DB: ' . $e->getMessage()]);
     }
 }*/
-
+/*
 function connect_db()
 {
     $host = getenv('DB_HOST');
@@ -52,6 +52,33 @@ function connect_db()
         ]);
     } catch (PDOException $e) {
         response(500, ['error' => 'Error DB: ' . $e->getMessage()]);
+    }
+}
+*/
+function connect_db()
+{
+    $url = getenv('DATABASE_URL');
+    if (!$url) {
+        response(500, ['error' => 'DATABASE_URL no configurada']);
+        exit;
+    }
+
+    $parts = parse_url($url);
+    $host = $parts['host'];
+    $port = $parts['port'] ?? 5432;
+    $user = $parts['user'];
+    $pass = $parts['pass'];
+    $db   = ltrim($parts['path'], '/');
+
+    $dsn = "pgsql:host=$host;port=$port;dbname=$db";
+
+    try {
+        return new PDO($dsn, $user, $pass, [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+        ]);
+    } catch (PDOException $e) {
+        response(500, ['error' => 'Error DB: ' . $e->getMessage()]);
+        exit;
     }
 }
 

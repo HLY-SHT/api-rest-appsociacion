@@ -1,5 +1,5 @@
 services:
-  # 1) API PHP + Apache (construido desde Dockerfile)
+  # API PHP + Apache (construido desde Dockerfile)
   - type: web
     runtime: docker
     name: api-php
@@ -7,46 +7,18 @@ services:
     branch: main
     dockerfilePath: Dockerfile
     envVars:
-      - key: DB_HOST
-        value: db
-      - key: DB_NAME
-        value: cannabis_db
-      - key: DB_USER
-        value: appsociacion
-      - key: DB_PASS
-        value: admin
+      - key: DATABASE_URL
+        value: postgresql://cannabisdb_user:hg183syyEfPij9Dj1QsA1XZUmBjo4kI9@dpg-d18qvuh5pdvs73cs1eq0-a/cannabisdb
       - key: JWT_SECRET
         sync: false
     plan: free
 
-  # 2) MySQL como servicio privado (imagen preconstruida)
-  - type: pserv
-    runtime: image
-    name: db
-    image:
-      url: mysql:8.0
-    envVars:
-      - key: MYSQL_ROOT_PASSWORD
-        sync: false
-      - key: MYSQL_DATABASE
-        value: cannabis_db
-      - key: MYSQL_USER
-        value: appsociacion
-      - key: MYSQL_PASSWORD
-        sync: false
-    plan: starter
-
-  # 3) phpMyAdmin (imagen preconstruida)
+  # Gestor de base de datos PostgreSQL: Adminer
   - type: web
-    runtime: image
-    name: phpmyadmin
+    runtime: docker
+    name: adminer
     image:
-      url: phpmyadmin/phpmyadmin
-    envVars:
-      - key: PMA_HOST
-        value: db
-      - key: PMA_USER
-        value: appsociacion
-      - key: PMA_PASSWORD
-        sync: false
+      url: adminer:latest
+    ports:
+      - 8081:8080
     plan: free
