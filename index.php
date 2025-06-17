@@ -180,14 +180,25 @@ switch ($endpoint) {
 
         if ($method === 'POST') {
             $in = json_decode(file_get_contents('php://input'), true);
-            $stmt = $db->prepare("INSERT INTO clubs (usuario, contrasena, nombre) VALUES (:u, :c, :n)");
+        
+            // Calcular nuevo ID manualmente
+            $stmt = $db->prepare("SELECT MAX(id) AS max_id FROM clubs FOR UPDATE");
+            $stmt->execute();
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            $nuevoId = $row && $row['max_id'] !== null ? ($row['max_id'] + 1) : 1;
+        
+            // Hacer el insert con el nuevo ID
+            $stmt = $db->prepare("INSERT INTO clubs (id, usuario, contrasena, nombre) VALUES (:id, :u, :c, :n)");
             $stmt->execute([
-                ':u' => $in['usuario'],
-                ':c' => password_hash($in['contrasena'], PASSWORD_DEFAULT),
-                ':n' => $in['nombre']
+                ':id' => $nuevoId,
+                ':u'  => $in['usuario'],
+                ':c'  => password_hash($in['contrasena'], PASSWORD_DEFAULT),
+                ':n'  => $in['nombre']
             ]);
+        
             response(201, ['message' => 'Club creado']);
         }
+        
 
         if ($method === 'PUT' && $id) {
             $in = json_decode(file_get_contents('php://input'), true);
