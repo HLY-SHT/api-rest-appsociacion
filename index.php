@@ -149,7 +149,7 @@ switch ($endpoint) {
                 'token' => $jwt,
                 'club_id' => $club['id'],
                 'club_nombre' => $club['nombre'],
-                'suscripcion'   => $club['suscripcion'] 
+                'suscripcion'   => $club['suscripcion']
             ]);
         }
 
@@ -191,22 +191,22 @@ switch ($endpoint) {
 
         if ($method === 'PUT' && $id) {
             $in = json_decode(file_get_contents('php://input'), true);
-        
+
             // Si se intenta cambiar la suscripción a Basic...
             if (isset($in['suscripcion']) && $in['suscripcion'] === 'Basic') {
                 // Contar socios actuales del club
                 $stmtCount = $db->prepare("SELECT COUNT(*) as total FROM socios WHERE club_id = :cid");
                 $stmtCount->execute([':cid' => $id]);
                 $totalSocios = (int) $stmtCount->fetch(PDO::FETCH_ASSOC)['total'];
-        
+
                 if ($totalSocios > 50) {
                     response(400, ['error' => "No puedes bajar a Basic, tienes {$totalSocios} socios y el límite es 50"]);
                 }
             }
-        
+
             // Si no te llega 'suscripcion', puedes asignar un valor por defecto o permitir nulo:
             $suscripcion = isset($in['suscripcion']) ? $in['suscripcion'] : null;
-        
+
             $stmt = $db->prepare("
                 UPDATE clubs
                 SET usuario     = :u,
@@ -220,11 +220,11 @@ switch ($endpoint) {
                 ':s'  => $suscripcion,
                 ':id' => $id
             ]);
-        
+
             response(200, ['message' => 'Club actualizado']);
         }
-        
-        
+
+
 
         if ($method === 'DELETE' && $id) {
             $stmt = $db->prepare("DELETE FROM clubs WHERE id = :id");
@@ -282,34 +282,34 @@ switch ($endpoint) {
             }
         } elseif ($method === 'POST') {
             $in = json_decode(file_get_contents('php://input'), true);
-        
+
             // 1. Obtener la suscripción del club
             $stmt = $db->prepare("SELECT suscripcion FROM clubs WHERE id = :cid");
             $stmt->execute([':cid' => $club_id]);
             $club = $stmt->fetch(PDO::FETCH_ASSOC);
-        
+
             if (!$club) {
                 response(403, ['error' => 'Club no válido']);
             }
-        
+
             $suscripcion = $club['suscripcion'];
-        
+
             // 2. Contar socios actuales
             $stmt = $db->prepare("SELECT COUNT(*) AS total FROM socios WHERE club_id = :cid");
             $stmt->execute([':cid' => $club_id]);
             $totalSocios = (int) $stmt->fetch(PDO::FETCH_ASSOC)['total'];
-        
+
             // 3. Verificar límite por plan
             $limites = ['Basic' => 50, 'Medium' => 150, 'Premium' => PHP_INT_MAX];
-        
+
             if (!isset($limites[$suscripcion])) {
                 response(400, ['error' => 'Suscripción desconocida']);
             }
-        
+
             if ($totalSocios >= $limites[$suscripcion]) {
                 response(403, ['error' => "Has alcanzado el límite de socios para el plan $suscripcion"]);
             }
-        
+
             // 4. Insertar socio
             $stmt = $db->prepare("INSERT INTO socios (club_id, id, nombre, apellidos, dni, cargo, cuota, monedero) 
                                   VALUES (:cid, :id, :n, :a, :d, :c, CURRENT_DATE, 0)");
@@ -321,10 +321,9 @@ switch ($endpoint) {
                 ':d'   => $in['dni'],
                 ':c'   => $in['cargo']
             ]);
-        
+
             response(201, ['message' => 'Socio creado']);
-        }
-         elseif ($method === 'PUT' && $sub === 'cuota' && $id) {
+        } elseif ($method === 'PUT' && $sub === 'cuota' && $id) {
             $socio_id = $id;
             $in = json_decode(file_get_contents('php://input'), true);
             $meses = isset($in['meses']) ? intval($in['meses']) : 0;
@@ -821,53 +820,53 @@ switch ($endpoint) {
             }
             break;
             */
-            
-            case 'dashboard':
-                if ($method === 'GET') {
-                    $club_id = get_club_id_from_token($jwt_secret);
-            
-                    // 1) Comprobar plan del club
-                    $stmtPlan = $db->prepare("SELECT suscripcion FROM clubs WHERE id = :cid");
-                    $stmtPlan->execute([':cid' => $club_id]);
-                    $info = $stmtPlan->fetch(PDO::FETCH_ASSOC);
-                    $plan = $info['suscripcion'] ?? '';
-            
-                    // Plan Basic NO tiene dashboard
-                    if ($plan !== 'Premium') {
-                        response(403, ['error' => 'Tu plan no incluye acceso al Dashboard']);
-                    }
-            
-                    // 2) Totales
-                    $totales = [
-                      'socios'        => (int)$db->query("SELECT COUNT(*) FROM socios WHERE club_id = $club_id")->fetchColumn(),
-                      'variedades'    => (int)$db->query("SELECT COUNT(*) FROM variedades WHERE club_id = $club_id")->fetchColumn(),
-                      'dispensaciones'=> (int)$db->query("SELECT COUNT(*) FROM dispensaciones WHERE club_id = $club_id")->fetchColumn(),
-                      'ingresos'      => (float)$db->query("SELECT COALESCE(SUM(dinero),0) FROM dispensaciones WHERE club_id = $club_id")->fetchColumn(),
-                    ];
-            
-                    // 3) Ingresos mensuales
-                    $mensual = $db->query("
+
+    case 'dashboard':
+        if ($method === 'GET') {
+            $club_id = get_club_id_from_token($jwt_secret);
+
+            // 1) Comprobar plan del club
+            $stmtPlan = $db->prepare("SELECT suscripcion FROM clubs WHERE id = :cid");
+            $stmtPlan->execute([':cid' => $club_id]);
+            $info = $stmtPlan->fetch(PDO::FETCH_ASSOC);
+            $plan = $info['suscripcion'] ?? '';
+
+            // Plan Basic NO tiene dashboard
+            if ($plan !== 'Premium') {
+                response(403, ['error' => 'Tu plan no incluye acceso al Dashboard']);
+            }
+
+            // 2) Totales
+            $totales = [
+                'socios'        => (int)$db->query("SELECT COUNT(*) FROM socios WHERE club_id = $club_id")->fetchColumn(),
+                'variedades'    => (int)$db->query("SELECT COUNT(*) FROM variedades WHERE club_id = $club_id")->fetchColumn(),
+                'dispensaciones' => (int)$db->query("SELECT COUNT(*) FROM dispensaciones WHERE club_id = $club_id")->fetchColumn(),
+                'ingresos'      => (float)$db->query("SELECT COALESCE(SUM(dinero),0) FROM dispensaciones WHERE club_id = $club_id")->fetchColumn(),
+            ];
+
+            // 3) Ingresos mensuales
+            $mensual = $db->query("
                       SELECT TO_CHAR(fecha, 'YYYY-MM') AS mes, SUM(dinero) AS total
                         FROM dispensaciones
                        WHERE club_id = $club_id
                        GROUP BY mes
                        ORDER BY mes
                     ")->fetchAll(PDO::FETCH_ASSOC);
-            
-                    // 4) Top 10 socios este mes
-                    $topSocios = $db->query("
-                      SELECT s.nombre, s.apellidos, COUNT(*) AS total
-                        FROM dispensaciones d
-                        JOIN socios s ON d.socio_id = s.id AND d.club_id = s.club_id
-                       WHERE d.club_id = $club_id
-                         AND TO_CHAR(d.fecha, 'YYYY-MM') = TO_CHAR(CURRENT_DATE, 'YYYY-MM')
-                       GROUP BY d.socio_id
-                       ORDER BY total DESC
-                       LIMIT 10
-                    ")->fetchAll(PDO::FETCH_ASSOC);
-            
-                    // 5) Top 10 variedades
-                    $topVariedades = $db->query("
+
+            $topSocios = $db->query("
+  SELECT s.nombre, s.apellidos, COUNT(*) AS total
+    FROM dispensaciones d
+    JOIN socios s ON d.socio_id = s.id AND d.club_id = s.club_id
+   WHERE d.club_id = $club_id
+     AND TO_CHAR(d.fecha, 'YYYY-MM') = TO_CHAR(CURRENT_DATE, 'YYYY-MM')
+   GROUP BY s.nombre, s.apellidos, d.socio_id
+   ORDER BY total DESC
+   LIMIT 10
+")->fetchAll(PDO::FETCH_ASSOC);
+
+
+            // 5) Top 10 variedades
+            $topVariedades = $db->query("
                       SELECT v.nombre, COUNT(*) AS total
                         FROM dispensaciones d
                         JOIN variedades v ON d.variedad_id = v.id AND d.club_id = v.club_id
@@ -876,26 +875,26 @@ switch ($endpoint) {
                        ORDER BY total DESC
                        LIMIT 10
                     ")->fetchAll(PDO::FETCH_ASSOC);
-            
-                    // 6) Socios con cuota vencida
-                    $caducados = $db->query("
+
+            // 6) Socios con cuota vencida
+            $caducados = $db->query("
                       SELECT id, nombre, apellidos, cuota
                         FROM socios
                        WHERE club_id = $club_id
                          AND cuota < CURRENT_DATE
                     ")->fetchAll(PDO::FETCH_ASSOC);
-            
-                    response(200, [
-                      'totales'       => $totales,
-                      'mensual'       => $mensual,
-                      'topSocios'     => $topSocios,
-                      'topVariedades' => $topVariedades,
-                      'caducados'     => $caducados
-                    ]);
-                }
-                break;
 
-                /*
+            response(200, [
+                'totales'       => $totales,
+                'mensual'       => $mensual,
+                'topSocios'     => $topSocios,
+                'topVariedades' => $topVariedades,
+                'caducados'     => $caducados
+            ]);
+        }
+        break;
+
+        /*
                 case 'login-socio':
                     if ($method !== 'POST') response(405, ['error'=>'Método no permitido']);
                     $in = json_decode(file_get_contents('php://input'), true);
@@ -933,10 +932,10 @@ switch ($endpoint) {
                     ]);
                   break;
                   */
-                  
-            
-              
-            
+
+
+
+
 
     default:
         response(404, ['error' => 'Endpoint no encontrado']);
