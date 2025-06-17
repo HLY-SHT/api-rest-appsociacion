@@ -69,7 +69,7 @@ function connect_db()
     $pass = $parts['pass'];
     $db   = ltrim($parts['path'], '/');
 
-    $dsn = "pgsql:host=$host;port=$port;dbname=$db";
+    $dsn = "pgsql:host=$host;port=$port;dbname=$db;sslmode=require";
 
     try {
         return new PDO($dsn, $user, $pass, [
@@ -81,12 +81,15 @@ function connect_db()
     }
 }
 
+
 function response($code, $data)
 {
     http_response_code($code);
+    header('Content-Type: application/json');
     echo json_encode($data);
     exit;
 }
+
 
 function get_club_id_from_token($jwt_secret)
 {
