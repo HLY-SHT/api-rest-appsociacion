@@ -182,10 +182,11 @@ switch ($endpoint) {
             $in = json_decode(file_get_contents('php://input'), true);
         
             // Calcular nuevo ID manualmente
-            $stmt = $db->prepare("SELECT MAX(id) AS max_id FROM clubs FOR UPDATE");
-            $stmt->execute();
-            $row = $stmt->fetch(PDO::FETCH_ASSOC);
-            $nuevoId = $row && $row['max_id'] !== null ? ($row['max_id'] + 1) : 1;
+            $stmt = $db->prepare("SELECT MAX(id) AS max_id FROM clubs");
+$stmt->execute();
+$row = $stmt->fetch(PDO::FETCH_ASSOC);
+$nuevoId = $row && $row['max_id'] !== null ? ($row['max_id'] + 1) : 1;
+
         
             // Hacer el insert con el nuevo ID
             $stmt = $db->prepare("INSERT INTO clubs (id, usuario, contrasena, nombre) VALUES (:id, :u, :c, :n)");
