@@ -189,13 +189,17 @@ $nuevoId = $row && $row['max_id'] !== null ? ($row['max_id'] + 1) : 1;
 
         
             // Hacer el insert con el nuevo ID
-            $stmt = $db->prepare("INSERT INTO clubs (id, usuario, contrasena, nombre) VALUES (:id, :u, :c, :n)");
+            $suscripcion = isset($in['suscripcion']) ? $in['suscripcion'] : 'Basic';
+
+            $stmt = $db->prepare("INSERT INTO clubs (id, usuario, contrasena, nombre, suscripcion) VALUES (:id, :u, :c, :n, :s)");
             $stmt->execute([
                 ':id' => $nuevoId,
                 ':u'  => $in['usuario'],
                 ':c'  => password_hash($in['contrasena'], PASSWORD_DEFAULT),
-                ':n'  => $in['nombre']
+                ':n'  => $in['nombre'],
+                ':s'  => $suscripcion
             ]);
+            
         
             response(201, ['message' => 'Club creado']);
         }
