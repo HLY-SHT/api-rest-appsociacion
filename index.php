@@ -359,7 +359,7 @@ switch ($endpoint) {
                 UPDATE socios 
                    SET cuota = DATE_ADD(
                                  GREATEST(
-                                   IFNULL(cuota, CURDATE()), 
+                                   COALESCE(cuota, CURDATE()), 
                                    CURDATE()
                                  ), 
                                  INTERVAL :meses MONTH
@@ -842,7 +842,7 @@ switch ($endpoint) {
                       'socios'        => (int)$db->query("SELECT COUNT(*) FROM socios WHERE club_id = $club_id")->fetchColumn(),
                       'variedades'    => (int)$db->query("SELECT COUNT(*) FROM variedades WHERE club_id = $club_id")->fetchColumn(),
                       'dispensaciones'=> (int)$db->query("SELECT COUNT(*) FROM dispensaciones WHERE club_id = $club_id")->fetchColumn(),
-                      'ingresos'      => (float)$db->query("SELECT IFNULL(SUM(dinero),0) FROM dispensaciones WHERE club_id = $club_id")->fetchColumn(),
+                      'ingresos'      => (float)$db->query("SELECT COALESCE(SUM(dinero),0) FROM dispensaciones WHERE club_id = $club_id")->fetchColumn(),
                     ];
             
                     // 3) Ingresos mensuales
