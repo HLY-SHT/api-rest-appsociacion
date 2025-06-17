@@ -16,11 +16,10 @@ use Firebase\JWT\Key;
 
 $method = $_SERVER['REQUEST_METHOD'];
 $requestUri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-$scriptPath = $_SERVER['SCRIPT_NAME'];
-$path = substr($requestUri, strlen($scriptPath));
-$parts = array_values(array_filter(explode('/', trim($path, '/'))));
-
+$path = trim($requestUri, '/'); // elimina slash inicial y final
+$parts = explode('/', $path);
 $endpoint = $parts[0] ?? null;
+
 $id = isset($parts[1]) && is_numeric($parts[1]) ? (int)$parts[1] : null;
 $sub = $parts[2] ?? null;
 
