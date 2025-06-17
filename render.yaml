@@ -1,7 +1,8 @@
 services:
-  - type: web
+  # 1) API PHP + Apache
+  - type: web           # web service
+    runtime: docker     # construye desde Dockerfile
     name: api-php
-    env: docker
     repo: https://github.com/HLY-SHT/api-rest-appsociacion.git
     branch: main
     dockerfilePath: Dockerfile
@@ -15,33 +16,35 @@ services:
       - key: DB_PASS
         value: admin
       - key: JWT_SECRET
-        fromSecret: jwt-secret
+        sync: false     # valor secreto que Render te pedirá
     plan: free
 
-  - type: private_service
+  # 2) MySQL como servicio privado
+  - type: pserv         # private service
+    runtime: docker     # usa una imagen Docker
     name: db
-    env: docker
-    image: mysql:8.0
+    dockerImage: mysql:8.0
     envVars:
       - key: MYSQL_ROOT_PASSWORD
-        fromSecret: mysql-root-password
+        sync: false     # Render te preguntará este secreto
       - key: MYSQL_DATABASE
         value: cannabis_db
       - key: MYSQL_USER
         value: appsociacion
       - key: MYSQL_PASSWORD
-        fromSecret: mysql-user-password
-    plan: free
+        sync: false     # Render te preguntará este secreto
+    plan: starter       # los private services no pueden ser free
 
+  # 3) phpMyAdmin (web público)
   - type: web
+    runtime: docker
     name: phpmyadmin
-    env: docker
-    image: phpmyadmin/phpmyadmin
+    dockerImage: phpmyadmin/phpmyadmin
     envVars:
       - key: PMA_HOST
         value: db
       - key: PMA_USER
         value: appsociacion
       - key: PMA_PASSWORD
-        fromSecret: mysql-user-password
+        sync: false     # mismo secreto que MYSQL_PASSWORD
     plan: free
